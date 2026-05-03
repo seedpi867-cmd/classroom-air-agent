@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -137,7 +138,7 @@ def write_outputs(results: list[dict]) -> None:
     KNOWLEDGE.mkdir(exist_ok=True)
     ROOMS.mkdir(parents=True, exist_ok=True)
 
-    now = datetime.now(timezone.utc).isoformat()
+    now = os.environ.get("AIR_AGENT_NOW") or datetime.now(timezone.utc).isoformat()
     order = {"act": 0, "watch": 1, "ok": 2}
     ranked = sorted(results, key=lambda item: (order[item["level"]], item["room"]))
 
@@ -162,8 +163,11 @@ def write_outputs(results: list[dict]) -> None:
             f"- {item['level'].upper()} | {item['room']} | {item['source']} | "
             f"{'; '.join(item['reasons'])} | action: {'; '.join(item['actions'])}\n"
         )
-    with (KNOWLEDGE / "air-ledger.md").open("a", encoding="utf-8") as handle:
-        handle.writelines(ledger_lines)
+    ledger_path = KNOWLEDGE / "air-ledger.md"
+    existing_ledger = ledger_path.read_text(encoding="utf-8") if ledger_path.exists() else ""
+    if f"## Cycle Receipt - {now}\n" not in existing_ledger:
+        with ledger_path.open("a", encoding="utf-8") as handle:
+            handle.writelines(ledger_lines)
 
     for item in ranked:
         if item["level"] == "ok":
@@ -171,11 +175,13 @@ def write_outputs(results: list[dict]) -> None:
         room_file = ROOMS / f"{slug_room(item['room'])}.md"
         if not room_file.exists():
             room_file.write_text(f"# {item['room']}\n\n", encoding="utf-8")
-        with room_file.open("a", encoding="utf-8") as handle:
-            handle.write(
-                f"- {now}: {item['level'].upper()} from `{item['source']}` - "
-                f"{'; '.join(item['reasons'])}. Action: {'; '.join(item['actions'])}\n"
-            )
+        entry = (
+            f"- {now}: {item['level'].upper()} from `{item['source']}` - "
+            f"{'; '.join(item['reasons'])}. Action: {'; '.join(item['actions'])}\n"
+        )
+        if entry not in room_file.read_text(encoding="utf-8"):
+            with room_file.open("a", encoding="utf-8") as handle:
+                handle.write(entry)
 
 
 def main() -> int:
