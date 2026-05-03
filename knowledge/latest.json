@@ -1,0 +1,61 @@
+{
+  "generated_at": "2026-05-03T19:57:22.681790+00:00",
+  "rooms": [
+    {
+      "source": "sample-readings.csv",
+      "timestamp": "2026-05-04T08:55:00+09:30",
+      "room": "Art Room",
+      "level": "act",
+      "reasons": [
+        "CO2 1090 ppm >= 1000",
+        "PM2.5 42.0 ug/m3 >= 35"
+      ],
+      "actions": [
+        "increase ventilation before the next occupied period",
+        "check filtration and recent emission sources; avoid high-exertion use"
+      ],
+      "readings": {
+        "co2_ppm": 1090.0,
+        "pm25_ugm3": 42.0,
+        "temp_c": 24.8,
+        "rh_percent": 52.0
+      }
+    },
+    {
+      "source": "sample-readings.csv",
+      "timestamp": "2026-05-04T08:55:00+09:30",
+      "room": "Room 3",
+      "level": "act",
+      "reasons": [
+        "CO2 1620 ppm >= 1500"
+      ],
+      "actions": [
+        "increase outdoor air now; verify HVAC mode; re-test in 15 minutes"
+      ],
+      "readings": {
+        "co2_ppm": 1620.0,
+        "pm25_ugm3": 9.4,
+        "temp_c": 23.1,
+        "rh_percent": 48.0
+      }
+    },
+    {
+      "source": "sample-readings.csv",
+      "timestamp": "2026-05-04T08:55:00+09:30",
+      "room": "Library",
+      "level": "ok",
+      "reasons": [
+        "all supplied readings inside watch thresholds"
+      ],
+      "actions": [
+        "keep normal ventilation schedule and continue logging"
+      ],
+      "readings": {
+        "co2_ppm": 820.0,
+        "pm25_ugm3": 6.2,
+        "temp_c": 22.4,
+        "rh_percent": 45.0
+      }
+    }
+  ]
+}
