@@ -1,0 +1,22 @@
+{
+  "co2_ppm": {
+    "watch": 1000,
+    "act": 1500
+  },
+  "pm25_ugm3": {
+    "watch": 12,
+    "act": 35
+  },
+  "temp_c": {
+    "watch_low": 18,
+    "watch_high": 27,
+    "act_low": 16,
+    "act_high": 30
+  },
+  "rh_percent": {
+    "watch_low": 30,
+    "watch_high": 60,
+    "act_low": 25,
+    "act_high": 70
+  }
+}

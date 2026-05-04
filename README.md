@@ -24,10 +24,11 @@ Optional columns are ignored unless future tools use them.
 - `knowledge/air-ledger.md` - append-only cycle receipts.
 - `knowledge/latest.json` - machine-readable latest classification.
 - `knowledge/rooms/<room>.md` - room history when a room crosses thresholds.
+- `data/air.sqlite` - structured reading and classification history.
 
 ## Thresholds
 
-Defaults are deliberately simple and editable in `tools/analyze-air.py`:
+Defaults are deliberately simple and editable in `config/thresholds.json`:
 
 | Signal | Watch | Act |
 | --- | ---: | ---: |
