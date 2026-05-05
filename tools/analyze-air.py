@@ -21,6 +21,8 @@ OUTPUT = ROOT / "output"
 KNOWLEDGE = ROOT / "knowledge"
 ROOMS = KNOWLEDGE / "rooms"
 DB_PATH = DATA / "air.sqlite"
+ADMISSION_LEDGER = KNOWLEDGE / "admission-ledger.md"
+REQUIRED_COLUMNS = {"timestamp", "room", "co2_ppm", "pm25_ugm3", "temp_c", "rh_percent"}
 
 CO2_WATCH = 1000.0
 CO2_ACT = 1500.0
@@ -70,25 +72,57 @@ def parse_float(value: str | None) -> float | None:
     return float(value)
 
 
+def current_time() -> str:
+    return os.environ.get("AIR_AGENT_NOW") or datetime.now(timezone.utc).isoformat()
+
+
+def record_admission_rejections(rejections: list[str], now: str) -> None:
+    if not rejections:
+        return
+    KNOWLEDGE.mkdir(exist_ok=True)
+    existing = ADMISSION_LEDGER.read_text(encoding="utf-8") if ADMISSION_LEDGER.exists() else "# Admission Ledger\n\nRejected input receipts.\n"
+    lines = [f"\n## Admission Gate - {now}\n"]
+    for rejection in rejections:
+        lines.append(f"- DENY | {rejection}\n")
+    block = "".join(lines)
+    if block not in existing:
+        with ADMISSION_LEDGER.open("a", encoding="utf-8") as handle:
+            if not ADMISSION_LEDGER.exists() or ADMISSION_LEDGER.stat().st_size == 0:
+                handle.write("# Admission Ledger\n\nRejected input receipts.\n")
+            handle.write(block)
+
+
 def load_readings() -> list[Reading]:
     readings: list[Reading] = []
+    rejections: list[str] = []
+    now = current_time()
     for path in sorted(CONTEXT.glob("*.csv")):
         with path.open(newline="", encoding="utf-8") as handle:
             reader = csv.DictReader(handle)
+            fieldnames = set(reader.fieldnames or [])
+            missing = sorted(REQUIRED_COLUMNS - fieldnames)
+            if missing:
+                rejections.append(f"{path.name} | missing required columns: {', '.join(missing)}")
+                continue
             for row in reader:
                 if not row.get("room"):
+                    rejections.append(f"{path.name} | row denied: missing room")
                     continue
-                readings.append(
-                    Reading(
-                        source=path.name,
-                        timestamp=(row.get("timestamp") or "").strip(),
-                        room=(row.get("room") or "").strip(),
-                        co2_ppm=parse_float(row.get("co2_ppm")),
-                        pm25_ugm3=parse_float(row.get("pm25_ugm3")),
-                        temp_c=parse_float(row.get("temp_c")),
-                        rh_percent=parse_float(row.get("rh_percent")),
+                try:
+                    readings.append(
+                        Reading(
+                            source=path.name,
+                            timestamp=(row.get("timestamp") or "").strip(),
+                            room=(row.get("room") or "").strip(),
+                            co2_ppm=parse_float(row.get("co2_ppm")),
+                            pm25_ugm3=parse_float(row.get("pm25_ugm3")),
+                            temp_c=parse_float(row.get("temp_c")),
+                            rh_percent=parse_float(row.get("rh_percent")),
+                        )
                     )
-                )
+                except ValueError as exc:
+                    rejections.append(f"{path.name} | row denied: invalid numeric field ({exc})")
+    record_admission_rejections(rejections, now)
     return readings
 
 
@@ -245,7 +279,7 @@ def write_outputs(results: list[dict]) -> None:
     KNOWLEDGE.mkdir(exist_ok=True)
     ROOMS.mkdir(parents=True, exist_ok=True)
 
-    now = os.environ.get("AIR_AGENT_NOW") or datetime.now(timezone.utc).isoformat()
+    now = current_time()
     order = {"act": 0, "watch": 1, "ok": 2}
     ranked = sorted(results, key=lambda item: (order[item["level"]], item["room"]))
 

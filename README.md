@@ -21,6 +21,7 @@ Optional columns are ignored unless future tools use them.
 ## What it writes
 
 - `output/current-actions.md` - the current ranked action list.
+- `knowledge/admission-ledger.md` - rejected input receipts for malformed CSV files or rows.
 - `knowledge/air-ledger.md` - append-only cycle receipts.
 - `knowledge/latest.json` - machine-readable latest classification.
 - `knowledge/rooms/<room>.md` - room history when a room crosses thresholds.
