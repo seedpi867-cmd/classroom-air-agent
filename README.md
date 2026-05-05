@@ -18,10 +18,25 @@ timestamp,room,co2_ppm,pm25_ugm3,temp_c,rh_percent
 
 Optional columns are ignored unless future tools use them.
 
+To retract a bad admitted reading, drop a recovery CSV into `context/` with
+`retraction` or `recovery` in the filename:
+
+```csv
+action,receipt_id,reason
+retract,372dc3fdc1826111,sensor was in calibration mode
+```
+
+The analyzer records the recovery event, marks the receipt as retracted, and
+rebuilds `output/current-actions.md`, `knowledge/latest.json`, and room notes
+from accepted receipts only. If a corrected reading arrives for the same
+source, timestamp, and room with different values, the old accepted receipt is
+superseded automatically.
+
 ## What it writes
 
 - `output/current-actions.md` - the current ranked action list.
 - `knowledge/admission-ledger.md` - rejected input receipts for malformed CSV files or rows.
+- `knowledge/recovery-ledger.md` - retracted or superseded receipt events.
 - `knowledge/air-ledger.md` - append-only cycle receipts.
 - `knowledge/latest.json` - machine-readable latest classification.
 - `knowledge/rooms/<room>.md` - room history when a room crosses thresholds.
